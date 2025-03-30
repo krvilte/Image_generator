@@ -14,10 +14,10 @@ app.use(express.urlencoded({ limit: "50mb", extended: false }));
 
 // Import routes
 import postRoutes from "./routes/post.routes.js";
-import dalleRoutes from "./routes/dalle.routes.js";
+import generateImageRoutes from "./routes/generateImage.routes.js";
 
 // Router declaration
-app.use("/api/v1/dalle", dalleRoutes);
+app.use("/api/v1/cape", generateImageRoutes);
 app.use("/api/v1/post", postRoutes);
 app.use(errorHandler);
 

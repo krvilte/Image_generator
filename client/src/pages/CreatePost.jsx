@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FormField, Loader } from "../components";
 import { getRandomPrompts } from "../utils";
-import { randomPrompts } from "../assets/prompts";
 import Preview from "../assets/preview.png";
 
 function CreatePost() {
@@ -13,12 +12,56 @@ function CreatePost() {
     result: "",
   });
   const [generatingImg, setGeneratingImg] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  // Function to generate image using the API
+  const generateImage = async () => {
+    if (!form.prompt) {
+      alert("Please provide a prompt to generate an image.");
+      return;
+    }
+
+    try {
+      setGeneratingImg(true);
+
+      const response = await fetch(
+        "http://localhost:3001/api/v1/cape/generate-image",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: form.prompt }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to generate image: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json(); // Parse JSON response
+      const imageUrl = data.data.imageUrl; // Access imageUrl from the response
+
+      setForm((prev) => ({ ...prev, result: imageUrl })); // Update form with new image URL
+    } catch (error) {
+      console.error("Image generation failed:", error);
+      alert("Error generating image");
+    } finally {
+      setGeneratingImg(false);
+    }
+  };
+
+  // useEffect to revoke the object URL when the component unmounts or the image changes
+  useEffect(() => {
+    return () => {
+      if (form.result) URL.revokeObjectURL(form.result);
+    };
+  }, [form.result]);
 
   // Event Handlers
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Submit");
+    // Implement your submit logic here
   };
 
   const handleChange = (e) => {
@@ -29,20 +72,6 @@ function CreatePost() {
   const handleSurpriseMe = () => {
     const randomPrompt = getRandomPrompts(form.prompt);
     setForm((prev) => ({ ...prev, prompt: randomPrompt }));
-  };
-
-  const generateImage = () => {
-    setGeneratingImg(true);
-    console.log("Generating image...");
-
-    // Simulating image generation process (Replace with actual logic)
-    setTimeout(() => {
-      setForm((prev) => ({
-        ...prev,
-        result: "https://via.placeholder.com/300", // Replace with real generated image URL
-      }));
-      setGeneratingImg(false);
-    }, 2000);
   };
 
   return (
@@ -106,7 +135,7 @@ function CreatePost() {
         {/* Button Section */}
         <div className="my-5 flex gap-5">
           <button
-            type="button" // Fixed: Prevents form submission
+            type="button"
             onClick={generateImage}
             disabled={generatingImg}
             className={`text-white hover:bg-green-700 bg-green-600 font-medium rounded-md text-sm w-full sm:m-auto px-5 py-2.5 text-center ${
@@ -120,7 +149,7 @@ function CreatePost() {
         <div className="mt-10">
           <p className="my-2 text-[#666e75] text-[14px]">
             Share your unique and imaginative creation with the community and
-            let your creativity the inspiration for others.
+            let your creativity be the inspiration for others.
           </p>
 
           <button
